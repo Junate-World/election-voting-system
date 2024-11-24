@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Voting System</title>
+    <style>
+       #votePieChart {
+    margin: auto;
+    border: 1px solid #ccc;
+  }
+  #election-results {
+    text-align: center;
+    margin: 30px;
+    border: 1px solid wheat;
+    height: 400px;
+    overflow-y: scroll;
+    width: 400px;
+    background-color: white;
+  }
+  #vote-pie-chart {
+      border: 1px solid wheat;
+      margin: 30px;
+      height: 400px;
+      width: 400px;
+      background-color: white;
+  }
+  .container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    border: 1px solid wheat;
+    background-image: url("{{ url_for('static', filename='images/cloud.jpg') }}");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+  }
+  #update_info {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    margin: 5px;
+    border: 1px solid whitesmoke;
+    height: 40px;
+    width: 100%;
+
+  }
+  /* Mobile Responsiveness */
+  @media (max-width: 768px){
+    .container{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+    }
+  }
+    </style>
+    <script>
+        function updateTally() {
+            fetch('/tally')
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('results');
+                    resultsDiv.innerHTML = ''; // Clear previous results
+
+                    // Display new results
+                    for (const [candidate, votes] of Object.entries(data.results)) {
+                        const candidateDiv = document.createElement('div');
+                        candidateDiv.textContent = `${candidate}: ${votes} votes`;
+                        resultsDiv.appendChild(candidateDiv);
+                    }
+                })
+                .catch(error => console.error('Error fetching tally:', error));
+        }
+
+        // Update tally every 5 seconds
+        setInterval(updateTally, 60000);
+
+        // Fetch the initial tally on page load
+        window.onload = updateTally;
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById("votePieChart").getContext("2d");
+
+    // Fetch vote data from the tally endpoint
+    fetch("/tally")
+        .then((response) => response.json())
+        .then((data) => {
+            const results = data.results;
+
+            // Extract candidates and vote counts
+            const candidates = Object.keys(results);
+            const voteCounts = Object.values(results);
+
+            // Create the pie chart
+            new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: candidates, // Candidate names
+                    datasets: [{
+                        label: "Vote Count",
+                        data: voteCounts, // Vote counts
+                        backgroundColor: [
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4CAF50",
+                            "#FF5722",
+                        ], // Customizable colors for the chart
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                    },
+                },
+            });
+        })
+        .catch((error) => console.error("Error fetching tally data:", error));
+});
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="election-results">
+            <h1>Election Results</h1>
+            <div id="results"></div>
+        </div>
+        
+        <div id="vote-pie-chart">
+            <canvas id="votePieChart" width="400" height="400"></canvas>
+        </div>
+    </div>
+    
+    <div id="update_info">
+        <p>Vote counts are updated automatically every 60 seconds.</p>
+    </div>
+    
+    
+    
+</body>
+</html>
